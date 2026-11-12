@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+
+/* Tokens de diseño de Urbant: portal inmobiliario, sobrio y elegante. */
+@theme {
+	--font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+	--font-serif: 'DM Serif Display', Georgia, serif;
+
+	--color-marca: #0e2a4f; /* azul marino de la marca */
+	--color-marca-claro: #1f4a85;
+	--color-marca-suave: #e8eef6;
+	--color-arena: #c2a26b; /* detalle cálido, usado con moderación */
+	--color-fondo: #f6f7f9;
+	--color-texto: #18202e;
+	--color-texto-suave: #5b6577;
+	--color-borde: #e2e6ec;
+
+	--color-disponible: #1f7a55;
+	--color-reservado: #b7791f;
+	--color-cerrado: #7a8291;
+	--color-alerta: #b4232c;
+}
+
+@layer base {
+	body {
+		@apply bg-fondo font-sans text-texto antialiased;
+	}
+
+	h1,
+	h2,
+	h3 {
+		@apply text-balance;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-marca-claro);
+		outline-offset: 2px;
+	}
+
+	input,
+	select,
+	textarea {
+		@apply rounded-lg border-borde bg-white text-texto placeholder:text-texto-suave/70;
+	}
+
+	input:focus,
+	select:focus,
+	textarea:focus {
+		@apply border-marca-claro ring-marca-claro;
+	}
+}
+
+@layer components {
+	.contenedor {
+		@apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+	}
+
+	.boton {
+		@apply inline-flex items-center justify-center gap-2 rounded-lg bg-marca px-5 py-3 font-semibold text-white transition-colors hover:bg-marca-claro disabled:opacity-60;
+	}
+
+	.boton-secundario {
+		@apply inline-flex items-center justify-center gap-2 rounded-lg border border-borde bg-white px-5 py-3 font-semibold text-marca transition-colors hover:border-marca;
+	}
+
+	.etiqueta-campo {
+		@apply text-sm font-semibold text-texto;
+	}
+
+	.tarjeta {
+		@apply rounded-2xl bg-white ring-1 ring-borde;
+	}
+}
