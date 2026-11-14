@@ -1,343 +1,123 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
+	import TarjetaCasa from '#lib/components/TarjetaCasa.svelte';
 	import { DEPARTAMENTOS } from '#lib/uruguay.ts';
 
-	// `form` contiene lo que devolvió la Form Action (ActionData)
-	let { form }: PageProps = $props();
+	let { data }: PageProps = $props();
 
-	let enviando = $state(false);
-	let tieneGaraje = $state(false);
-	let tipo = $state('');
+	const fotoPortada =
+		'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=75';
 
-	// Un terreno no tiene dormitorios, baños ni garaje
-	let esTerreno = $derived(tipo === 'terreno');
-
-	let valores = $derived(form && 'valores' in form ? form.valores : undefined);
-	let errores = $derived(form && 'errores' in form ? form.errores : undefined);
-	let cantidadErrores = $derived(errores ? Object.keys(errores).length : 0);
-
-	// Si la acción devolvió valores (por un error) se recupera lo elegido
-	$effect(() => {
-		if (valores) {
-			tieneGaraje = valores.tieneGaraje;
-			tipo = valores.tipo;
+	const pasos = [
+		{
+			titulo: 'Envía los datos de tu inmueble',
+			texto: 'Dirección, precio, si es venta o alquiler, garaje y lo que la hace especial.'
+		},
+		{
+			titulo: 'Nuestro equipo la revisa',
+			texto: 'Si falta algo, te dejamos el motivo para que puedas corregirlo.'
+		},
+		{
+			titulo: 'Se publica en el catálogo',
+			texto:
+				'Desde ese momento la encuentran quienes buscan por departamento, precio o dormitorios.'
 		}
-		if (form?.exito) {
-			tieneGaraje = false;
-			tipo = '';
-		}
-	});
-
-	const tipos = [
-		{ valor: 'casa', texto: 'Casa' },
-		{ valor: 'apartamento', texto: 'Apartamento' },
-		{ valor: 'terreno', texto: 'Terreno' }
 	];
-
-	const operaciones = [
-		{ valor: 'venta', texto: 'Vender', detalle: 'Precio total' },
-		{ valor: 'alquiler', texto: 'Alquilar', detalle: 'Precio mensual' }
-	];
-
-	const campo = 'mt-1.5 w-full';
-	const seccion = 'border-t border-borde pt-8';
-	const leyenda = 'float-left mb-5 w-full font-serif text-2xl text-marca';
-	const grilla = 'clear-both grid gap-5 sm:grid-cols-2';
 </script>
 
-<svelte:head>
-	<title>Publique su inmueble · Urbant</title>
-</svelte:head>
+<!-- Portada con buscador: el formulario viaja por GET al catálogo -->
+<section class="relative isolate overflow-hidden bg-marca">
+	<img src={fotoPortada} alt="" class="absolute inset-0 -z-10 size-full object-cover" />
+	<div
+		class="absolute inset-0 -z-10 bg-linear-to-r from-marca via-marca/85 to-marca/30"
+		aria-hidden="true"
+	></div>
 
-{#snippet error(mensaje: string | undefined, id: string)}
-	{#if mensaje}<span {id} class="mt-1.5 block text-sm font-medium text-alerta">{mensaje}</span>{/if}
-{/snippet}
+	<div class="contenedor py-20 sm:py-28">
+		<h1 class="max-w-2xl font-serif text-5xl leading-[1.05] text-white sm:text-6xl">
+			Encuentra un inmueble a la altura de tu próxima etapa
+		</h1>
+		<p class="mt-5 max-w-xl text-lg leading-relaxed text-white/80">
+			Propiedades en venta y alquiler, revisadas una por una por nuestro equipo antes de publicarse.
+		</p>
 
-<div class="contenedor max-w-3xl pt-12">
-	<h1 class="font-serif text-4xl text-marca sm:text-5xl">Publique su inmueble</h1>
-	<p class="mt-3 max-w-prose text-lg leading-relaxed text-texto-suave">
-		Completa los datos de tu casa, apartamento o terreno. Nuestro equipo lo revisa y, si está todo
-		en orden, lo publica en el catálogo.
-	</p>
+		<form
+			action="/catalogo"
+			method="GET"
+			class="mt-10 grid max-w-4xl gap-2 rounded-2xl bg-white p-2 shadow-2xl shadow-black/20 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.1fr_1fr_auto]"
+		>
+			<label class="sr-only" for="b-tipo">Tipo de inmueble</label>
+			<select id="b-tipo" name="tipo" class="border-0 py-3 font-semibold">
+				<option value="">Todos los tipos</option>
+				<option value="casa">Casas</option>
+				<option value="apartamento">Apartamentos</option>
+				<option value="terreno">Terrenos</option>
+			</select>
+			<label class="sr-only" for="b-operacion">Operación</label>
+			<select id="b-operacion" name="operacion" class="border-0 py-3 font-semibold">
+				<option value="">Comprar o alquilar</option>
+				<option value="venta">Comprar</option>
+				<option value="alquiler">Alquilar</option>
+			</select>
+			<label class="sr-only" for="b-departamento">Departamento</label>
+			<select id="b-departamento" name="departamento" class="border-0 py-3 font-semibold">
+				<option value="">Todo Uruguay</option>
+				{#each DEPARTAMENTOS as d (d)}
+					<option value={d}>{d}</option>
+				{/each}
+			</select>
+			<label class="sr-only" for="b-precio">Precio máximo</label>
+			<input
+				id="b-precio"
+				type="number"
+				name="precioMax"
+				min="0"
+				placeholder="Precio máximo (US$)"
+				class="border-0 py-3"
+			/>
+			<button class="boton">Buscar</button>
+		</form>
+	</div>
+</section>
 
-	{#if form?.exito}
-		<div class="mt-8 rounded-xl border border-disponible/30 bg-disponible/5 p-5" role="status">
-			<p class="font-bold text-disponible">Recibimos tu solicitud n.º {form.solicitudId}</p>
-			<p class="mt-1 text-texto-suave">
-				Está pendiente de revisión. Nuestro equipo la revisará antes de publicarla.
+{#if data.recientes.length > 0}
+	<section class="contenedor pt-20">
+		<div class="flex flex-wrap items-end justify-between gap-4">
+			<div>
+				<h2 class="font-serif text-4xl text-marca">Recién publicadas</h2>
+				<p class="mt-2 text-texto-suave">Las últimas propiedades que aprobó nuestro equipo.</p>
+			</div>
+			<a href="/catalogo" class="boton-secundario">Ver todo el catálogo</a>
+		</div>
+		<ul class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+			{#each data.recientes as casa (casa.id)}
+				<li><TarjetaCasa {casa} /></li>
+			{/each}
+		</ul>
+	</section>
+{/if}
+
+<section class="contenedor pt-24">
+	<div class="tarjeta grid gap-12 p-8 sm:p-12 lg:grid-cols-[1fr_1.4fr]">
+		<div>
+			<h2 class="font-serif text-4xl text-marca">¿Quieres vender o alquilar tu inmueble?</h2>
+			<p class="mt-4 max-w-md leading-relaxed text-texto-suave">
+				Completa un formulario con los datos de la propiedad y nuestro equipo se encarga del resto.
 			</p>
+			<a href="/solicitudes/nueva" class="boton mt-8">Publicar inmueble</a>
 		</div>
-	{:else if cantidadErrores > 0}
-		<div class="mt-8 rounded-xl border border-alerta/30 bg-alerta/5 p-5" role="alert">
-			<p class="font-bold text-alerta">
-				{cantidadErrores === 1 ? 'Hay un campo' : `Hay ${cantidadErrores} campos`} por corregir
-			</p>
-			<p class="mt-1 text-texto-suave">Están marcados en rojo más abajo.</p>
-		</div>
-	{/if}
-
-	<form
-		method="POST"
-		novalidate
-		use:enhance={() => {
-			enviando = true;
-			return async ({ update }) => {
-				await update();
-				enviando = false;
-			};
-		}}
-		class="tarjeta mt-8 space-y-10 p-6 sm:p-10"
-	>
-		<fieldset>
-			<legend class={leyenda}>Tus datos de contacto</legend>
-			<div class={grilla}>
-				<label>
-					<span class="etiqueta-campo">Nombre completo</span>
-					<input
-						name="clienteNombre"
-						autocomplete="name"
-						value={valores?.clienteNombre ?? ''}
-						aria-invalid={!!errores?.clienteNombre}
-						aria-describedby="e-nombre"
-						class={campo}
-					/>
-					{@render error(errores?.clienteNombre, 'e-nombre')}
-				</label>
-				<label>
-					<span class="etiqueta-campo">Email</span>
-					<input
-						type="email"
-						name="clienteEmail"
-						autocomplete="email"
-						value={valores?.clienteEmail ?? ''}
-						aria-invalid={!!errores?.clienteEmail}
-						aria-describedby="e-email"
-						class={campo}
-					/>
-					{@render error(errores?.clienteEmail, 'e-email')}
-				</label>
-			</div>
-		</fieldset>
-
-		<fieldset class={seccion}>
-			<legend class={leyenda}>Tipo de inmueble</legend>
-			<div class="clear-both" role="radiogroup" aria-describedby="e-tipo">
-				<div class="grid grid-cols-3 gap-3">
-					{#each tipos as t (t.valor)}
-						<label
-							class="flex cursor-pointer items-center gap-3 rounded-xl border border-borde p-4 font-bold transition-colors has-checked:border-marca has-checked:bg-marca-suave"
-						>
-							<input
-								type="radio"
-								name="tipo"
-								value={t.valor}
-								bind:group={tipo}
-								class="text-marca"
-							/>
-							{t.texto}
-						</label>
-					{/each}
-				</div>
-				{@render error(errores?.tipo, 'e-tipo')}
-			</div>
-		</fieldset>
-
-		<fieldset class={seccion}>
-			<legend class={leyenda}>Ubicación</legend>
-			<div class={grilla}>
-				<label>
-					<span class="etiqueta-campo">Departamento</span>
-					<select
-						name="departamento"
-						aria-invalid={!!errores?.departamento}
-						aria-describedby="e-departamento"
-						class={campo}
+		<ol class="grid gap-8 sm:grid-cols-3">
+			{#each pasos as paso, i (paso.titulo)}
+				<li>
+					<span
+						class="flex size-10 items-center justify-center rounded-full bg-marca-suave font-serif text-xl text-marca"
 					>
-						<option value="">Elegir…</option>
-						{#each DEPARTAMENTOS as d (d)}
-							<option value={d} selected={valores?.departamento === d}>{d}</option>
-						{/each}
-					</select>
-					{@render error(errores?.departamento, 'e-departamento')}
-				</label>
-				<label>
-					<span class="etiqueta-campo">Ciudad o localidad</span>
-					<input
-						name="ciudad"
-						placeholder="Ej.: Punta del Este"
-						value={valores?.ciudad ?? ''}
-						aria-invalid={!!errores?.ciudad}
-						aria-describedby="e-ciudad"
-						class={campo}
-					/>
-					{@render error(errores?.ciudad, 'e-ciudad')}
-				</label>
-				<label class="sm:col-span-2">
-					<span class="etiqueta-campo">Dirección</span>
-					<input
-						name="direccion"
-						placeholder="Ej.: Av. Italia 3050"
-						value={valores?.direccion ?? ''}
-						aria-invalid={!!errores?.direccion}
-						aria-describedby="e-direccion"
-						class={campo}
-					/>
-					{@render error(errores?.direccion, 'e-direccion')}
-				</label>
-			</div>
-		</fieldset>
-
-		<fieldset class={seccion}>
-			<legend class={leyenda}>Operación y precio</legend>
-			<div class={grilla}>
-				<div class="sm:col-span-2" role="radiogroup" aria-labelledby="t-op" aria-describedby="e-op">
-					<span id="t-op" class="etiqueta-campo">¿Venta o alquiler?</span>
-					<div class="mt-1.5 grid grid-cols-2 gap-3">
-						{#each operaciones as op (op.valor)}
-							<label
-								class="flex cursor-pointer items-center gap-3 rounded-xl border border-borde p-4 transition-colors has-checked:border-marca has-checked:bg-marca-suave"
-							>
-								<input
-									type="radio"
-									name="operacion"
-									value={op.valor}
-									checked={valores?.operacion === op.valor}
-									class="text-marca"
-								/>
-								<span>
-									<span class="block font-bold">{op.texto}</span>
-									<span class="text-sm text-texto-suave">{op.detalle}</span>
-								</span>
-							</label>
-						{/each}
-					</div>
-					{@render error(errores?.operacion, 'e-op')}
-				</div>
-				<label>
-					<span class="etiqueta-campo">Precio en US$</span>
-					<input
-						type="number"
-						name="precio"
-						min="1"
-						value={valores?.precio ?? ''}
-						aria-invalid={!!errores?.precio}
-						aria-describedby="e-precio"
-						class={campo}
-					/>
-					{@render error(errores?.precio, 'e-precio')}
-				</label>
-			</div>
-		</fieldset>
-
-		<fieldset class={seccion}>
-			<legend class={leyenda}>El inmueble</legend>
-			<div class="{grilla} lg:grid-cols-3">
-				{#if !esTerreno}
-					<label>
-						<span class="etiqueta-campo">Dormitorios</span>
-						<input
-							type="number"
-							name="dormitorios"
-							min="0"
-							value={valores?.dormitorios ?? ''}
-							aria-invalid={!!errores?.dormitorios}
-							aria-describedby="e-dormitorios"
-							class={campo}
-						/>
-						{@render error(errores?.dormitorios, 'e-dormitorios')}
-					</label>
-					<label>
-						<span class="etiqueta-campo">Baños</span>
-						<input
-							type="number"
-							name="banos"
-							min="1"
-							value={valores?.banos ?? ''}
-							aria-invalid={!!errores?.banos}
-							aria-describedby="e-banos"
-							class={campo}
-						/>
-						{@render error(errores?.banos, 'e-banos')}
-					</label>
-				{/if}
-				<label>
-					<span class="etiqueta-campo">Superficie (m²)</span>
-					<input
-						type="number"
-						name="areaM2"
-						min="10"
-						value={valores?.areaM2 ?? ''}
-						aria-invalid={!!errores?.areaM2}
-						aria-describedby="e-area"
-						class={campo}
-					/>
-					{@render error(errores?.areaM2, 'e-area')}
-				</label>
-
-				<!-- Garaje: la casilla habilita el campo de cantidad de autos -->
-				{#if !esTerreno}
-					<div
-						class="rounded-xl border p-4 transition-colors sm:col-span-2 lg:col-span-3 {tieneGaraje
-							? 'border-marca bg-marca-suave'
-							: 'border-borde'}"
-					>
-						<label class="flex cursor-pointer items-center gap-3 font-bold">
-							<input
-								type="checkbox"
-								name="tieneGaraje"
-								bind:checked={tieneGaraje}
-								class="size-5 rounded text-marca"
-							/>
-							Tiene garaje
-						</label>
-						<label class="mt-4 block max-w-xs {tieneGaraje ? '' : 'opacity-50'}">
-							<span class="etiqueta-campo">¿Para cuántos autos?</span>
-							<input
-								type="number"
-								name="garajeAutos"
-								min="1"
-								max="10"
-								disabled={!tieneGaraje}
-								value={valores?.garajeAutos || (tieneGaraje ? '1' : '')}
-								aria-invalid={!!errores?.garajeAutos}
-								aria-describedby="e-garaje"
-								class="{campo} disabled:cursor-not-allowed disabled:bg-fondo"
-							/>
-							{@render error(errores?.garajeAutos, 'e-garaje')}
-						</label>
-					</div>
-				{/if}
-
-				<label class="sm:col-span-2 lg:col-span-3">
-					<span class="etiqueta-campo">Otras características, separadas por comas</span>
-					<input
-						name="caracteristicas"
-						placeholder="Ej.: Piscina, Parrillero, Balcón"
-						value={valores?.caracteristicas ?? ''}
-						class={campo}
-					/>
-				</label>
-				<label class="sm:col-span-2 lg:col-span-3">
-					<span class="etiqueta-campo">Descripción</span>
-					<textarea
-						name="descripcion"
-						rows="5"
-						placeholder="Qué la hace especial: la luz, el barrio, el estado, lo que hay cerca."
-						aria-invalid={!!errores?.descripcion}
-						aria-describedby="e-descripcion"
-						class={campo}>{valores?.descripcion ?? ''}</textarea
-					>
-					{@render error(errores?.descripcion, 'e-descripcion')}
-				</label>
-			</div>
-		</fieldset>
-
-		<div class="flex flex-wrap items-center gap-4 border-t border-borde pt-8">
-			<button disabled={enviando} class="boton">
-				{enviando ? 'Enviando solicitud…' : 'Enviar solicitud'}
-			</button>
-			<p class="text-sm text-texto-suave">Nuestro equipo la revisa antes de publicarla.</p>
-		</div>
-	</form>
-</div>
+						{i + 1}
+					</span>
+					<h3 class="mt-4 font-bold">{paso.titulo}</h3>
+					<p class="mt-2 text-sm leading-relaxed text-texto-suave">{paso.texto}</p>
+				</li>
+			{/each}
+		</ol>
+	</div>
+</section>
